@@ -20,7 +20,7 @@ from django.urls import path, include
 from api.views import ContributorsViewset, ProjectsViewset, IssuesViewset, CommentsViewset
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from authentication.views import MyObtainTokenPairView, RegisterView  # , UserList, UserDetail
+from authentication.views import MyObtainTokenPairView, RegisterView, LogoutPage
 from rest_framework import routers
 from rest_framework_nested import routers
 
@@ -45,7 +45,6 @@ urlpatterns = [
     path('login/', MyObtainTokenPairView.as_view(), name='obtain_token'),
     path('login/refresh/', TokenRefreshView.as_view(), name='refresh_token'),
     path('signup/', RegisterView.as_view(), name='auth_register'),
-
-
+    path('logout/', LogoutPage.as_view(), name='logout'),
 
 ]

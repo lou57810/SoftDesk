@@ -3,8 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsProjectAuthentication
-from authentication.models import User
+from authentication.models import CustomUser
 from .serializers import ContributorSerializer, ProjectsListSerializer,\
     ProjectsDetailSerializer, IssueSerializer, CommentSerializer
 
@@ -13,13 +12,18 @@ from .models import Contributor, Project, Issue, Comment
 from rest_framework import status
 from django.contrib.auth import get_user_model
 
+from .permissions import ProjectContributorReadOnly, ContributorReadOnly, \
+    AuthorFullAccess  # ProjectPermissions,
+
+from django.db.models import Q
+
+
 
 
 class ProjectsViewset(ModelViewSet):
-
     serializer_class = ProjectsListSerializer
     detail_serializer_class = ProjectsDetailSerializer
-    permissions_classes = [IsAuthenticated, IsProjectAuthentication]
+    permissions_classes = [IsAuthenticated]#, IsProjectAuthentication]
 
     def get_queryset(self):
         # return Project.objects.filter(contributors__user=request.user)
@@ -35,31 +39,47 @@ class ProjectsViewset(ModelViewSet):
             raw = Project.objects.get(id=kwargs['pk'])
             project = ProjectsDetailSerializer(raw, many=False)
             return Response(project.data, status=status.HTTP_200_OK)
-
     """
-    def get_object(self, pk):
-        try:
-            return Project.objects.get(pk=pk)
-        except Project.DoesNotExist:
-            raise Http404
+    def get(self, request):
+        if request.user.is_authenticated:
+            print("User is logged in :)")
+            print(f"Username --> {request.user.username}")
+        else:
+            print("User is not logged in :(")
+    
 
-    def get(self, request, pk, format=None):
-        project = self.get_object(pk)
-        serializer = ProjectsDetailSerializer(project)
-        return Response(serializer.data)
+    def get_serializer_class(self):
+    # Si l'action demandée est retrieve nous retournons le serializer de détail
+        if self.action == 'retrieve':
+            return self.detail_serializer_class
+        return super().get_serializer_class()
 
-    def put(self, request, pk, format=None):
-        project = self.get_object(pk)
-        serializer = ProjectsSerializer(project, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        # Add a project for authenticated user
+        serializer.save(author=self.request.user)
+    
+    def get_queryset(self):
+        # Retrieve projects for authenticated user 
 
-    def delete(self, request, pk, format=None):
-        project = self.get_object(pk)
-        project.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        # "Define Projects where current user is author or contributor"
+        current_user = self.request.user
+        current_user_contribution = Contributor.objects.filter(Q(author=self.request.user))
+        contribution_projects_id = current_user_contribution.values("project").distinct()
+
+        # "Retrieve only projects where current user is author or contributor"
+
+        queryset = Project.objects.filter(
+            Q(author=current_user) | Q(
+                id__in=contribution_projects_id)).distinct().order_by('pk')
+
+        return queryset
+    
+    
+
+    def get_permissions(self):
+        if self.request.method in ['PATCH', 'PUT', 'DELETE']:
+            return [AuthorFullAccess()]
+        return [ContributorReadOnly()]
     """
 
 

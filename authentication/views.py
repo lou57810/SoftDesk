@@ -1,30 +1,30 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User
+from .models import CustomUser
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from .serializers import RegisterSerializer
 from rest_framework import generics
-
-"""
-class UserList(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+from django.views.generic import View
+from django.contrib.auth import logout
 
 
-class UserDetail(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
-
-"""
 class MyObtainTokenPairView(TokenObtainPairView):
     permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
 
 
 class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
+    queryset = CustomUser.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
+
+class LogoutPage(View):
+    def get(self, request):
+        logout(request)
+        return redirect('/login')
+
+
 

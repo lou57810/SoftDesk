@@ -1,5 +1,5 @@
 from django.db import models, transaction
-
+# from django.contrib.auth.models import User
 # from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 
@@ -47,7 +47,7 @@ class Issue(models.Model):
     author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     assignee_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                         related_name='assignee_user_id', default=author)
+                                         related_name='assignee_user_id')
 
     created_time = models.DateTimeField(auto_now_add=True)
 
@@ -58,7 +58,7 @@ class Issue(models.Model):
 
 class Comment(models.Model):
     description = models.TextField(max_length=1024)
-    author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
     issue = models.ForeignKey(to=Issue, on_delete=models.CASCADE, related_name="comments")
     created_time = models.DateTimeField(auto_now_add=True)
 
