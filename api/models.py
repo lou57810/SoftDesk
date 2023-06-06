@@ -5,7 +5,7 @@ from django.conf import settings
 
 
 class Project(models.Model):
-    title = models.CharField(max_length=128)
+    title = models.CharField(max_length=128, blank=False, unique=True)
     description = models.CharField(max_length=1024)
     type = models.CharField(max_length=16, choices=[("Back-end", "Back-end"), ("Front-end", "Front-end"),
                                                     ("iOS", "iOS"), ("Android", "Android")])
@@ -27,7 +27,8 @@ class Contributor(models.Model):
     permission = models.CharField(max_length=16, choices=[("Author", "Author"), ("Contributor", "Contributor")])
     role = models.CharField(max_length=128, choices=[("Developpeur Python", "Developpeur Python"),
                                                      ("UX-Designer", "UX-Designer"),
-                                                     ("Administrateur Database", "Administrateur Database")]                            )
+                                                     ("Administrateur Database", "Administrateur Database")]
+                            )
 
 
     # class Meta:

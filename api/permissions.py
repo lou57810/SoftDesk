@@ -1,67 +1,75 @@
 # from .models import Project
-# from rest_framework import permissions
-
-
-from rest_framework.permissions import BasePermission, SAFE_METHODS
-
-from django.db.models import Q
+from rest_framework import permissions
+# from rest_framework.permissions import BasePermission
 
 from api.models import Project, Contributor
 
-
-class AuthorFullAccess(BasePermission):
-    """ Give full permission for author of the projects, issues or comments """
-
-    def has_object_permission(self, request, view, obj):
-        """ Give full permissions if user is author of the projects, issues or
-        comments """
-        if obj.author_user == request.user:
-            return True
-        return False
+# To implement a custom permission, override BasePermission and implement either, or both, of the following methods:
+#   .has_permission(self, request, view)
+#   .has_object_permission(self, request, view, obj)
 
 
-class ContributorReadOnly(BasePermission):
-    """ Give Read only permission for Contributor of the project """
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return False
-
-
-class ProjectContributorReadOnly(BasePermission):
-    """ Give Read only permission for Contributor of the project """
-
-    def has_permission(self, request, view):
-        current_project_id = int(view.kwargs["project_pk"])
-
-        current_user_contribution = Contributor.objects.filter(Q(
-            author_user=request.user))
-        current_user_contribution_projects_id = current_user_contribution.values_list(
-            "project", flat=True).distinct()
-
-        current_author_contribution_projects_id = Project.objects.filter(Q(
-            author=request.user) | Q(id__in=current_user_contribution_projects_id)).values_list(
-            "id", flat=True).distinct()
-
-        if request.user.is_authenticated and current_project_id in current_author_contribution_projects_id:
-            return True
-
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return False
-
-"""
 class ProjectPermissions(permissions.BasePermission):
+    # Custom permissions:
 
     def has_permission(self, request, view):
         return True
 
     def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+        # SAFE_METHODS: tuple contenant 'GET' , 'OPTIONS' et 'HEAD'
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        return request.user == obj.author
+
+
+class ContributorPermissions(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        project = Project.objects.get(id=view.kwargs['project_pk'])
+
+        user_project = Project.objects.filter(contributors__user=request.user)
+        if project in user_project:
+            project = Project.objects.get(id=view.kwargs['project_pk'])
+            if request.method in permissions.SAFE_METHODS:
+                return True
+            return request.user == project.author
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        project = Project.objects.get(id=view.kwargs['project_pk'])
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user == project.author
+
+
+class IssuePermissions(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        project = Project.objects.get(id=view.kwargs['project_pk'])
+        usr_projects = Project.objects.filter(contributors__user=request.user)
+        if project in usr_projects:
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user == obj.author
-"""
+
+
+class CommentPermissions(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        project = Project.objects.get(id=view.kwargs['project_pk'])
+        usr_projects = Project.objects.filter(contributors__user=request.user)
+        if project in usr_projects:
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user == obj.author

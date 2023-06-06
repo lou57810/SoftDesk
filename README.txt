@@ -1,1 +1,5 @@
-Création utilisateur : http://127.0.0.1:8000/api/token/ 
+SWAGGER: https://drf-yasg.readthedocs.io/en/stable/readme.html
+	 Cliquer sur le bouton build github =  https://github.com/axnsan12/drf-yasg/actions
+	 Code: Accès au code et à la Doc. 
+	 
+					
