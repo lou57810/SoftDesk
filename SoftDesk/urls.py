@@ -19,24 +19,16 @@ from django.contrib import admin
 from django.urls import path, include
 from api.views import ContributorsViewset, ProjectsViewset, IssuesViewset, CommentsViewset
 from django.urls import re_path
+
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from authentication.views import MyObtainTokenPairView, RegisterView, LogoutPage
+# from authentication.views import MyObtainTokenPairView, RegisterView, LogoutPage
+from authentication.views import RegisterView, LogoutPage
 from rest_framework import routers
 from rest_framework_nested import routers
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 
-
-router = routers.SimpleRouter()
-
-router.register('projects', ProjectsViewset, basename='projects')
-
-project_router = routers.NestedSimpleRouter(router, 'projects', lookup='project')
-project_router.register('users', ContributorsViewset, basename='contributors')
-project_router.register('issues', IssuesViewset, basename='issues')
-issue_router = routers.NestedSimpleRouter(project_router, 'issues', lookup='issues')
-issue_router.register('comments', CommentsViewset, basename='comments')
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -51,16 +43,25 @@ schema_view = get_schema_view(
    permission_classes=[permissions.AllowAny],
 )
 
+router = routers.SimpleRouter()
+router.register('projects', ProjectsViewset, basename='projects')
+
+project_router = routers.NestedSimpleRouter(router, 'projects', lookup='project')
+project_router.register('users', ContributorsViewset, basename='contributors')
+project_router.register('issues', IssuesViewset, basename='issues')
+issue_router = routers.NestedSimpleRouter(project_router, 'issues', lookup='issues')
+issue_router.register('comments', CommentsViewset, basename='comments')
 
 urlpatterns = [
 
     path('admin/', admin.site.urls),
-    # path('api-auth/', include('rest_framework.urls')),
+    # path('api-auth/', include('rest_framework.urls')),  # Affiche login dans navbar rest_framework
     path('', include(router.urls)),
     path('', include(project_router.urls)),
     path('', include(issue_router.urls)),
 
-    path('login/', MyObtainTokenPairView.as_view(), name='obtain_token'),
+    # path('login/', MyObtainTokenPairView.as_view(), name='obtain_token'),
+    path('login/', TokenObtainPairView.as_view(), name='obtain_token'),
     path('login/refresh/', TokenRefreshView.as_view(), name='refresh_token'),
     path('signup/', RegisterView.as_view(), name='auth_register'),
     path('logout/', LogoutPage.as_view(), name='logout'),
