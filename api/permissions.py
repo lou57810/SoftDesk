@@ -4,72 +4,74 @@ from rest_framework import permissions
 
 from api.models import Project, Contributor
 
+
 # To implement a custom permission, override BasePermission and implement either, or both, of the following methods:
 #   .has_permission(self, request, view)
 #   .has_object_permission(self, request, view, obj)
 
 
-class ProjectPermissions(permissions.BasePermission):
-    # Custom permissions:
+class IsAuthor(permissions.BasePermission):
+    def is_author(self, pk, user):
+        try:
+            content = models.Project.objects.get(pk=pk)
+        except ObjectDoesNotExist:
+            return False
 
+        return content.author == user
+
+
+class IsContributor(permissions.BasePermission):
+    def is_contributor(self, pk, user):
+        try:
+            content = models.Project.objects.get(pk=pk)
+        except ObjectDoesNotExist:
+            return False
+
+        return content.contributor_id == user
+
+
+class IsContributorOrAuthorProjectInProjectView(IsContributor, IsAuthor):
     def has_permission(self, request, view):
-        return True
-
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-        # SAFE_METHODS: tuple contenant 'GET' , 'OPTIONS' et 'HEAD'
-        if request.method in permissions.SAFE_METHODS:
+        if view.action == "create":
             return True
+        if view.action in ("destroy", "update"):
+            return self.is_author(view.kwargs["pk"], request.user)
+        return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(view.kwargs["pk"], request.user)
 
-        return request.user == obj.author
+
+class IsIssueAuthor(IsContributor):
+    def is_issue_author(self, pk, user):
+        try:
+            content = models.Issue.objects.get(pk=pk)
+        except ObjectDoesNotExist:
+            return False
+
+        return content.issue_id == user
 
 
-class ContributorPermissions(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        project = Project.objects.get(id=view.kwargs['project_pk'])
-
-        user_project = Project.objects.filter(contributors__user=request.user)
-        if project in user_project:
-            project = Project.objects.get(id=view.kwargs['project_pk'])
-            if request.method in permissions.SAFE_METHODS:
-                return True
-            return request.user == project.author
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        project = Project.objects.get(id=view.kwargs['project_pk'])
-        if request.method in permissions.SAFE_METHODS:
+class IsIssueContributor(IsIssueAuthor, IsContributor):
+    def has_permissions(self, request, view):
+        if view.action == "create":
             return True
-        return request.user == project.author
+        if view.action in ("destroy", "update"):
+            return self.is_issue_author(view.kwargs["pk"], request.user)
+        return self.is_contributor(request.user, view.kwargs["pk"]) and self.is_issue_author(view.kwargs["pk"], request.user)
 
 
-class IssuePermissions(permissions.BasePermission):
+class IsCommentAuthor(IsContributor):
+    def is_comment_author(self, pk, user):
+        try:
+            content = models.Comment.object.get(pk=pk)
+        except ObjectDoesNotExist:
+            return False
 
-    def has_permission(self, request, view):
-        project = Project.objects.get(id=view.kwargs['project_pk'])
-        usr_projects = Project.objects.filter(contributors__user=request.user)
-        if project in usr_projects:
+        return content.comment_user_id == user
+
+
+class IsCommentContributor(IsCommentAuthor, IsContributor):
+    def has_permissions(self, request, view):
+        if view.action == "create":
             return True
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return request.user == obj.author
-
-
-class CommentPermissions(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        project = Project.objects.get(id=view.kwargs['project_pk'])
-        usr_projects = Project.objects.filter(contributors__user=request.user)
-        if project in usr_projects:
-            return True
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return request.user == obj.author
+        if view.action in ("destroy", "update"):
+            return self.is_comment_author(view.kwargs["pk"], request.user)
+        return self.is_contributor(request.user, view.kwargs["pk"]) and self.is_comment_author(view.kwargs["pk"], request.user)

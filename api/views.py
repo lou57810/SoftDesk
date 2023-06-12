@@ -12,7 +12,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from .models import Contributor, Project, Issue, Comment
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from .permissions import ProjectPermissions, ContributorPermissions
+from .permissions import IsAuthor, IsContributorOrAuthorProjectInProjectView  # , ProjectPermissions, ContributorPermissions
 # from .permissions import ProjectContributorReadOnly, ContributorReadOnly, \
     # AuthorFullAccess  # ProjectPermissions,
 
@@ -22,7 +22,7 @@ from django.db.models import Q
 class ProjectsViewset(ModelViewSet):
     serializer_class = ProjectsListSerializer
     detail_serializer_class = ProjectsDetailSerializer
-    permissions_classes = [IsAuthenticated, ProjectPermissions]
+    permissions_classes = [IsAuthenticated, IsAuthor]
 
     def get_queryset(self):
         # return Project.objects.filter(contributors__user=request.user)
@@ -44,7 +44,8 @@ class ProjectsViewset(ModelViewSet):
 class ContributorsViewset(ModelViewSet):
 
     serializer_class = ContributorSerializer
-    permission_classes = [IsAuthenticated, ContributorPermissions]
+    # permission_classes = [IsAuthenticated, ContributorPermissions]
+    permission_classes = [IsContributorOrAuthorProjectInProjectView]
 
     def get_queryset(self):
         return Contributor.objects.filter(
@@ -61,7 +62,7 @@ class ContributorsViewset(ModelViewSet):
         for object in Contributor.objects.filter(project_id=project_pk):
             contributors_list.append(object.user_id)
 
-        if int(data['user']) in contributors_lst:
+        if int(data['user']) in contributors_list:
             return Response(
                 'User already added.', status=status.HTTP_400_BAD_REQUEST)
 

@@ -24,7 +24,6 @@ class ProjectsListSerializer(serializers.ModelSerializer):
     author = SlugRelatedField(queryset=get_user_model().objects.all(),
                               slug_field="username")
 
-
     class Meta:
         model = Project
         fields = ['pk', 'title', 'description', 'type', 'author']
