@@ -17,7 +17,7 @@ class IsAuthor(permissions.BasePermission):
         except ObjectDoesNotExist:
             return False
 
-        return content.author == user
+        return content.author_user_id == user
 
 
 class IsContributor(permissions.BasePermission):
@@ -38,11 +38,14 @@ class IsContributorOrAuthorProjectInProjectView(IsContributor, IsAuthor):
             return self.is_author(view.kwargs["pk"], request.user)
         return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(view.kwargs["pk"], request.user)
 
-
+# Seuls les contributeurs sont autorisés
+# à créer ou à consulter les problèmes
+# d'un projet.(Auteur == Contributeur ??)
 class IsIssueAuthor(IsContributor):
     def is_issue_author(self, pk, user):
         try:
             content = models.Issue.objects.get(pk=pk)
+            print('pk:', pk)
         except ObjectDoesNotExist:
             return False
 
