@@ -36,16 +36,18 @@ class IsContributorOrAuthorProjectInProjectView(IsContributor, IsAuthor):
             return True
         if view.action in ("destroy", "update"):
             return self.is_author(view.kwargs["pk"], request.user)
-        return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(view.kwargs["pk"], request.user)
+        return self.is_contributor(view.kwargs["pk"], request.user) or self.is_author(view.kwargs["pk"], request.user)
 
 # Seuls les contributeurs sont autorisés
 # à créer ou à consulter les problèmes
 # d'un projet.(Auteur == Contributeur ??)
+
+
 class IsIssueAuthor(IsContributor):
     def is_issue_author(self, pk, user):
         try:
             content = models.Issue.objects.get(pk=pk)
-            print('pk:', pk)
+
         except ObjectDoesNotExist:
             return False
 
@@ -58,7 +60,7 @@ class IsIssueContributor(IsIssueAuthor, IsContributor):
             return True
         if view.action in ("destroy", "update"):
             return self.is_issue_author(view.kwargs["pk"], request.user)
-        return self.is_contributor(request.user, view.kwargs["pk"]) and self.is_issue_author(view.kwargs["pk"], request.user)
+        return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(view.kwargs["pk"], request.user)
 
 
 class IsCommentAuthor(IsContributor):

@@ -12,7 +12,8 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from .models import Contributor, Project, Issue, Comment
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from .permissions import IsAuthor, IsContributor, IsContributorOrAuthorProjectInProjectView  # , ProjectPermissions, ContributorPermissions
+from .permissions import IsAuthor, IsContributor, IsContributorOrAuthorProjectInProjectView, \
+    IsIssueContributor, IsCommentContributor  # , ProjectPermissions, ContributorPermissions
 # from .permissions import ProjectContributorReadOnly, ContributorReadOnly, \
     # AuthorFullAccess  # ProjectPermissions,
 
@@ -24,14 +25,24 @@ class ProjectsViewset(ModelViewSet):
     detail_serializer_class = ProjectsDetailSerializer
     permissions_classes = [IsAuthenticated, IsContributorOrAuthorProjectInProjectView]
 
+    def get_serializer_class(self):
+        """ Return the serializer class for request """
+        if self.action == "retrieve":
+            return self.detail_serializer_class
+        return super().get_serializer_class()
+
     def get_queryset(self):
         # Filtre sur l'utilisateur connecté
         user = self.request.user
-        queryset = Project.objects.filter(author_id=user.id) # | \
+        queryset = Project.objects.filter(author_id=user.id)  # | \
                    # Project.objects.filter(contributors=user.id)
-        # return Project.objects.all()
+
         return queryset
 
+    def perform_create(self, serializer):
+        """ Add a project for authenticated user """
+        serializer.save(author=self.request.user)
+    """
     @action(detail=True, methods=['post'])
     def disable(self, request, pk):
         self.get_object().disable()
@@ -43,19 +54,13 @@ class ProjectsViewset(ModelViewSet):
             project = ProjectsDetailSerializer(raw, many=False)
             return Response(project.data, status=status.HTTP_200_OK)
     """
-    def retrieve(self, request, pk=None):
-        queryset = Project.objects.all()
-        project = get_object_or_404(queryset, pk=pk)
-        serializer = ProjectSerializer(project)
-        return Response(serializer.data)
-        """
 
 
 class ContributorsViewset(ModelViewSet):
 
     serializer_class = ContributorSerializer
     # permission_classes = [IsAuthenticated, ContributorPermissions]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsContributor]
 
     def get_queryset(self):
         return Contributor.objects.filter(project_id=self.kwargs["project_pk"])
@@ -63,67 +68,33 @@ class ContributorsViewset(ModelViewSet):
     def perform_create(self, serializer):
         project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         serializer.save(project=project)
-    #contributors = Project.objects.filter(
-        # Q(user=request.user) | Q(contributors__in=contributors_list)) #  .exclude(review__in=reviews)
-    """
-    def create(self, project_pk=None):
 
-        contributors_list = []
-        data = request.data.copy()
-
-        for object in Contributor.objects.filter(project_id=project_pk):
-            contributors_list.append(object.user_id)
-
-        if int(data['user']) in contributors_list:
-            return Response(
-                'User already added.', status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            data['project'] = project_pk
-            data['role'] = 'Contributor'
-            serialized_data = ContributorsSerializer(data=data)
-            serialized_data.is_valid(raise_exception=True)
-            serialized_data.save()
-
-            return Response(
-                serialized_data.data, status=status.HTTP_201_CREATED)
-    """
 
 class IssuesViewset(ModelViewSet):
 
     serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated, IsIssueContributor]
     # detail_serializer_class = IssuesDetailSerializer
 
     def get_queryset(self):
-        return Issue.objects.filter(
-            project_id=self.kwargs['project_pk'])
+        return Issue.objects.filter(project_id=self.kwargs['project_pk'])
 
     def perform_create(self, serializer):
         project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         serializer.save(author=self.request.user, project=project)
 
-    """
-    def get_comments(self, instance):
-        # Le paramètre 'instance' est l'instance de la catégorie consultée.
-        # Dans le cas d'une liste, cette méthode est appelée autant de fois qu'il y a
-        # d'entités dans la liste
-
-        # On applique le filtre sur notre queryset pour n'avoir que les produits actifs
-        # queryset = instance.comments.filter(active=True)
-        # Le serializer est créé avec le queryset défini et toujours défini en tant que many=True
-        serializer = CommentsSerializer(queryset, many=True)
-        # la propriété '.data' est le rendu de notre serializer que nous retournons ici
-        return serializer.data
-    """
+    # def get_permissions(self):
+        # pass
 
 
 class CommentsViewset(ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsCommentContributor]
 
     def get_queryset(self):
-        return Comment.objects.filter(issue=self.kwargs['issues_pk'])
+        return Comment.objects.filter(issue=self.kwargs['issue_pk'])
 
     def perform_create(self, serializer):
-        issue = get_object_or_404(Issue, pk=self.kwargs["issues_pk"])
+        issue = get_object_or_404(Issue, pk=self.kwargs["issue_pk"])
         serializer.save(author=self.request.user, issue=issue)          # l'auteur est user connecté
 
