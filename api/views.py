@@ -92,9 +92,11 @@ class CommentsViewset(ModelViewSet):
     permission_classes = [IsAuthenticated, IsCommentContributor]
 
     def get_queryset(self):
-        return Comment.objects.filter(issue=self.kwargs['issue_pk'])
+
+        return Comment.objects.filter(issue=self.kwargs['issues_pk'])
+
 
     def perform_create(self, serializer):
-        issue = get_object_or_404(Issue, pk=self.kwargs["issue_pk"])
+        issue = get_object_or_404(Issue, pk=self.kwargs["issues_pk"])
         serializer.save(author=self.request.user, issue=issue)          # l'auteur est user connecté
 
