@@ -53,8 +53,8 @@ class ProjectsDetailSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     # author = SerializerMethodField()
-    author = SlugRelatedField(queryset=get_user_model().objects.all(),
-                              slug_field="username")
+    # author = SlugRelatedField(queryset=get_user_model().objects.all(), slug_field="username")
+    author = StringRelatedField(read_only=True)
     issue = StringRelatedField(read_only=True)
 
     class Meta:

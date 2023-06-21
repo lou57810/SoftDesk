@@ -27,12 +27,10 @@ class Contributor(models.Model):
     permission = models.CharField(max_length=16, choices=[("Author", "Author"), ("Contributor", "Contributor")])
     role = models.CharField(max_length=128, choices=[("Developpeur Python", "Developpeur Python"),
                                                      ("UX-Designer", "UX-Designer"),
-                                                     ("Administrateur Database", "Administrateur Database")]
-                            )
+                                                     ("Administrateur Database", "Administrateur Database")])
 
-
-    # class Meta:
-        # unique_together = ['user', 'project']
+    class Meta:
+        unique_together = ['user', 'project']
 
 
 class Issue(models.Model):
@@ -59,7 +57,7 @@ class Issue(models.Model):
 
 class Comment(models.Model):
     description = models.TextField(max_length=1024)
-    author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)  # author=user_login
     issue = models.ForeignKey(to=Issue, on_delete=models.CASCADE, related_name="comments")
     created_time = models.DateTimeField(auto_now_add=True)
 

@@ -30,53 +30,75 @@ class IsContributor(permissions.BasePermission):
         return content.contributor_id == user
 
 
-class IsContributorOrAuthorProjectInProjectView(IsContributor, IsAuthor):
+class IsContributorOrAuthorProject(IsContributor, IsAuthor):
+    message = "You don't have the rights to access this info."
+
     def has_permission(self, request, view):
         if view.action == "create":
             return True
         if view.action in ("destroy", "update"):
-            return self.is_author(view.kwargs["pk"], request.user)
+            return self.is_contributor(view.kwargs["pk"], request.user)
         return self.is_contributor(view.kwargs["pk"], request.user) or self.is_author(view.kwargs["pk"], request.user)
+"""
+def check_contributor(user, project):
+    for contributor in Contributor.objects.filter(project_id=project.id):
+        if user == contributor.user_id:
+            return True
+    return False
+"""
 
-# Seuls les contributeurs sont autorisés
-# à créer ou à consulter les problèmes
-# d'un projet.(Auteur == Contributeur ??)
-
-
-class IsIssueAuthor(IsContributor):
-    def is_issue_author(self, pk, user):
+class IsProjectContributor(IsContributorOrAuthorProject):
+    def is_issue_contributor_or_author(self, pk, user):
         try:
-            content = models.Issue.objects.get(pk=pk)
-
+            content = models.Project.objects.get(pk=pk)
+            print('contents:', content)
         except ObjectDoesNotExist:
             return False
 
         return content.issue_id == user
 
 
-class IsIssueContributor(IsIssueAuthor, IsContributor):
+class IsIssueContributor(IsProjectContributor):
+    message = "You don't have the rights to access this info."
+
     def has_permissions(self, request, view):
         if view.action == "create":
             return True
+
         if view.action in ("destroy", "update"):
-            return self.is_issue_author(view.kwargs["pk"], request.user)
-        return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(view.kwargs["pk"], request.user)
+            # print('request:', request.user)
+            return self.is_issue_contributor_or_author(request.user, view.kwargs["pk"])
 
 
-class IsCommentAuthor(IsContributor):
+
+class IsCommentAuthor(permissions.BasePermission):
+
     def is_comment_author(self, pk, user):
         try:
             content = models.Comment.object.get(pk=pk)
         except ObjectDoesNotExist:
             return False
 
-        return content.comment_user_id == user
+        # return content.author_user_id == author_user_id
+        return content.author_id == user
 
 
-class IsCommentContributor(IsCommentAuthor, IsContributor):
-    def has_permissions(self, request, view):
+class IsCommentContributor(permissions.BasePermission):
+    def is_comment_contributor(self, pk, user):
+        try:
+            content = models.Comment.objects.get(pk=pk)
+        except ObjectDoesNotExist:
+            return False
+
+        return content.contributor_id == user
+
+
+class IsCommentAuthorOrContributor(IsCommentAuthor, IsCommentContributor):
+    def has_object_permission(self, request, view, obj):
         if view.action == "create":
             return True
         if view.action in ("destroy", "update"):
             return self.is_comment_author(view.kwargs["pk"], request.user)
-        return self.is_contributor(request.user, view.kwargs["pk"]) and self.is_comment_author(view.kwargs["pk"], request.user)
+        return self.is_comment_contributor(request.user, view.kwargs["pk"]) or self.is_comment_author(view.kwargs["pk"], request.user)
+
+
