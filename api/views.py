@@ -34,8 +34,8 @@ class ProjectsViewset(ModelViewSet):
     def get_queryset(self):
         # Filtre sur l'utilisateur connecté
         user = self.request.user
-        queryset = Project.objects.filter(author_id=user.id) #  | \
-                   # Project.objects.filter(contributors=user.id)
+        # print('Queryset:', Project.objects.filter(Q(author_id=user.id) | Q(contributors=user.id)))
+        queryset = Project.objects.filter(Q(author_id=user.id) | Q(contributors=user.id))
 
         return queryset
 

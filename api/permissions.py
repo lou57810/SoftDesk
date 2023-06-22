@@ -27,7 +27,7 @@ class IsContributor(permissions.BasePermission):
         except ObjectDoesNotExist:
             return False
 
-        return content.contributor_id == user
+        return content.contributor_id == user       # contributor_user_id
 
 
 class IsContributorOrAuthorProject(IsContributor, IsAuthor):
