@@ -35,10 +35,13 @@ class IsContributor(permissions.BasePermission):
 class IsContributorOrAuthorProject(IsContributor, IsAuthor):
 
     def has_permission(self, request, view):
+        print('test_view:', view.kwargs)
         if view.action == "create":
             return True
         if view.action in ("destroy", "update"):
             return self.is_author(view.kwargs["pk"], request.user)
+        if "pk" not in view.kwargs:         # view.kwargs dictionnaire vide.
+            return True
         return self.is_contributor(view.kwargs["pk"], request.user) or self.is_author(view.kwargs["pk"], request.user)
 
 
@@ -57,13 +60,16 @@ class IsProjectContributor(IsContributor, IsAuthor):
         if view.action == "create":
             return True
         if view.action in ("destroy", "update"):
-            print('current:', view.kwargs["projects_pk"])
-            print('request:', request.user.id, request.user, view.kwargs["pk"], self.is_contributor(view.kwargs["pk"], request.user))
-            print('request2:', view.kwargs["pk"], request.user.id)
-            return True  #
-        # return self.is_contributor(view.kwargs["projects_pk"], request.user)#  or self.is_author(view.kwargs["pk"], request.user)
-            # return self.is_contributor(view.kwargs["projects_pk"], request.user)
-        return True
+
+            # print('current:', view.kwargs["projects_pk"])
+            # print('request:', request.user.id, request.user, view.kwargs["pk"], self.is_contributor(view.kwargs["pk"], request.user))
+            # print('request2:', view.kwargs["pk"], request.user.id)
+            return self.is_author(view.kwargs["pk"], request.user)
+
+        return self.is_contributor(view.kwargs["pk"], request.user.id) or self.is_author(view.kwargs["pk"],
+                                                                                          request.user.id)
+            # return True
+            # return True
 
 
 
@@ -75,7 +81,7 @@ class IsIssueContributor(IsContributor):
             return True
 
         if view.action in ("destroy", "update"):
-            print('request_issue:', request.user, view.kwargs["pk"])
+            # print('request_issue:', request.user, view.kwargs["pk"])
             # return self.is_issue_contributor_or_author(request.user, view.kwargs["pk"])
             return self.is_contributor(request.user, view.kwargs["pk"])
 
@@ -87,6 +93,6 @@ class IsCommentAuthorOrContributor(IsAuthor, IsContributor):
             return True
         if view.action in ("destroy", "update"):
             # return self.is_author(view.kwargs["pk"], request.user)
-        # return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(
+            # return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(
             # view.kwargs["pk"], request.user)
             return True

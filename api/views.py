@@ -24,7 +24,7 @@ from django.db.models import Q
 class ProjectsViewset(ModelViewSet):
     serializer_class = ProjectsListSerializer
     detail_serializer_class = ProjectsDetailSerializer
-    permissions_classes = [IsAuthenticated, IsContributorOrAuthorProject]
+    permission_classes = [IsAuthenticated, IsContributorOrAuthorProject]
 
     def get_serializer_class(self):
         """ Return the serializer class for request """
@@ -36,10 +36,9 @@ class ProjectsViewset(ModelViewSet):
         # Filtre sur l'utilisateur connecté
         user = self.request.user
         print('user, user.id:', user, user.id)
-        # print('Queryset:', Project.objects.filter(Q(author_id=user.id) | Q(contributors=user.id)))
-        # queryset = Project.objects.filter(Q(author_id=user.id) | Q(contributors=user.id))
-        queryset = Project.objects.filter(author_id=user.id)
-        return queryset
+
+        queryset = Project.objects.filter(Q(author_id=user.id) | Q(contributors__user=user.id))
+        return queryset.distinct()
 
     def perform_create(self, serializer):
         """ Add a project for authenticated user """
