@@ -4,6 +4,8 @@ from rest_framework import permissions
 from django.core.exceptions import ObjectDoesNotExist
 from api import models
 from api.models import Project, Contributor
+from django.db.models import Q
+
 
 
 
@@ -16,26 +18,24 @@ class IsAuthor(permissions.BasePermission):
     def is_author(self, pk, user):
         try:
             content = models.Project.objects.get(pk=pk)
+
         except ObjectDoesNotExist:
             return False
-
-        return content.author_id == user
-
+        return content.author == user
 
 class IsContributor(permissions.BasePermission):
-    def is_contributor(self, pk, user):
+    def is_contributor(self, project, user):
         try:
-            content = models.Project.objects.get(pk=pk)
+            models.Contributor.objects.get(user=user, project=project)
+            # print('content2:', models.Contributor.objects.get(user=user, project=project))
         except ObjectDoesNotExist:
             return False
 
-        return content.contributors  # _user_id == user       # contributor_user_id
-
+        return True
 
 class IsContributorOrAuthorProject(IsContributor, IsAuthor):
 
     def has_permission(self, request, view):
-        print('test_view:', view.kwargs)
         if view.action == "create":
             return True
         if view.action in ("destroy", "update"):
@@ -57,40 +57,62 @@ def check_contributor(user, project):
 class IsProjectContributor(IsContributor, IsAuthor):
 
     def has_permission(self, request, view):
-        if view.action == "create":
-            return True
-        if view.action in ("destroy", "update"):
+        print('logged:', request.user) # => user1 (user login)
+        print('proj_id:', view.kwargs)  # => {'projects_pk': '21'}
+        print('projects:', Project.objects.filter(author_id=request.user))
+        project = Project.objects.filter(id=view.kwargs['projects_pk'])
+        print('project:', project, project[0])
+        projects = Project.objects.filter(author_id=request.user)
 
-            # print('current:', view.kwargs["projects_pk"])
-            # print('request:', request.user.id, request.user, view.kwargs["pk"], self.is_contributor(view.kwargs["pk"], request.user))
-            # print('request2:', view.kwargs["pk"], request.user.id)
-            return self.is_author(view.kwargs["pk"], request.user)
-
-        return self.is_contributor(view.kwargs["pk"], request.user.id) or self.is_author(view.kwargs["pk"],
-                                                                                          request.user.id)
-            # return True
-            # return True
+        print('project_user:', projects)
+        print('project[0]:', project[0])
 
 
 
-class IsIssueContributor(IsContributor):
-    message = "You do not have permission to perform this action."
+        if view.action in ("create", "destroy", "update"):
+            return self.is_author(view.kwargs["projects_pk"], request.user)
 
-    def has_permissions(self, request, view):
-        if view.action == "create":
-            return True
+        return self.is_contributor(view.kwargs["projects_pk"], request.user) or self.is_author(view.kwargs["projects_pk"], request.user)
 
-        if view.action in ("destroy", "update"):
-            # print('request_issue:', request.user, view.kwargs["pk"])
-            # return self.is_issue_contributor_or_author(request.user, view.kwargs["pk"])
-            return self.is_contributor(request.user, view.kwargs["pk"])
+        # if "pk" not in view.kwargs:  # view.kwargs dictionnaire vide.
+        #   return True
+
+
+class IsIssueContributor(IsContributor, IsAuthor):
+    # message = "You do not have permission to perform this action."
+
+    def has_permission(self, request, view):
+        user = request.user
+        print('test:', Contributor.objects.filter(user_id=user)) # ==> 40 (contributeur/user1)
+        print('logged:', request.user)  # => user1 (user login)
+        project = Project.objects.get(id=view.kwargs['projects_pk'])
+        print('view:', view.kwargs["projects_pk"])
+        print('project:', project)  # ex: AlgoInvest
+        print('issue1:', self.is_contributor(view.kwargs["projects_pk"], request.user))
+        # print('issue2:', self.is_contributor(view.kwargs["projects_pk"], request.user))
+        # print('test:', models.Contributor.objects.get(user=user, project_id=project.id))
+        print('contributors:', Contributor.objects.filter(project_id=project.id))
+
+        # print('authors:', Contributor.objects.get(pk=pk).user)
+        # contrib = Contributor.objects.filter(user=self)
+        # print('author:', contrib)
+
+        if view.action in "list":
+            return self.is_contributor(view.kwargs["projects_pk"], request.user) or self.is_author(
+                view.kwargs["projects_pk"], request.user)
+
+        if view.action in ("create", "destroy", "update"):
+            for contributor in Contributor.objects.filter(project_id=project.id):
+                if user == contributor.user_id:
+                    return True
+                return self.is_contributor(view.kwargs["projects_pk"], contributor.user)
 
 
 class IsCommentAuthorOrContributor(IsAuthor, IsContributor):
 
-    def has_permissions(self, request, view, obj):
+    def has_permission(self, request, view, obj):
         if view.action == "create":
-            return True
+            return self.is_issue_contributor_or_author(request.user, view.kwargs["pk"])
         if view.action in ("destroy", "update"):
             # return self.is_author(view.kwargs["pk"], request.user)
             # return self.is_contributor(request.user, view.kwargs["pk"]) or self.is_author(

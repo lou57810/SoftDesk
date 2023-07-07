@@ -54,9 +54,11 @@ class ContributorSerializer(serializers.ModelSerializer):
 
 class IssueSerializer(serializers.ModelSerializer):
     project = StringRelatedField()
-    # author = StringRelatedField()
     # author = SerializerMethodField()
-    author = StringRelatedField(read_only=True)
+    # author = StringRelatedField(read_only=True)
+    author = StringRelatedField()
+
+
     comments = SerializerMethodField()
     assignee_user_id = SlugRelatedField(queryset=get_user_model().objects.all(),
                                         slug_field="username")

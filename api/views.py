@@ -36,9 +36,9 @@ class ProjectsViewset(ModelViewSet):
         # Filtre sur l'utilisateur connecté
         user = self.request.user
         print('user, user.id:', user, user.id)
-
+        # Affichage contrib + authors
         queryset = Project.objects.filter(Q(author_id=user.id) | Q(contributors__user=user.id))
-        return queryset.distinct()
+        return queryset.distinct()      # Projets uniques
 
     def perform_create(self, serializer):
         """ Add a project for authenticated user """
