@@ -44,16 +44,6 @@ class IsContributorOrAuthorProject(IsContributor, IsAuthor):
             return True
         return self.is_contributor(view.kwargs["pk"], request.user) or self.is_author(view.kwargs["pk"], request.user)
 
-
-"""
-def check_contributor(user, project):
-    for contributor in Contributor.objects.filter(project_id=project.id):
-        if user == contributor.user_id:
-            return True
-    return False
-"""
-
-
 class IsProjectContributor(IsContributor, IsAuthor):
 
     def has_permission(self, request, view):
@@ -68,7 +58,6 @@ class IsProjectContributor(IsContributor, IsAuthor):
         print('project[0]:', project[0])
 
 
-
         if view.action in ("create", "destroy", "update"):
             return self.is_author(view.kwargs["projects_pk"], request.user)
 
@@ -79,24 +68,10 @@ class IsProjectContributor(IsContributor, IsAuthor):
 
 
 class IsIssueContributor(IsContributor, IsAuthor):
-    # message = "You do not have permission to perform this action."
 
     def has_permission(self, request, view):
         user = request.user
-        print('test:', Contributor.objects.filter(user_id=user)) # ==> 40 (contributeur/user1)
-        print('logged:', request.user)  # => user1 (user login)
         project = Project.objects.get(id=view.kwargs['projects_pk'])
-        print('view:', view.kwargs["projects_pk"])
-        print('project:', project)  # ex: AlgoInvest
-        print('issue1:', self.is_contributor(view.kwargs["projects_pk"], request.user))
-        # print('issue2:', self.is_contributor(view.kwargs["projects_pk"], request.user))
-        # print('test:', models.Contributor.objects.get(user=user, project_id=project.id))
-        print('contributors:', Contributor.objects.filter(project_id=project.id))
-
-        # print('authors:', Contributor.objects.get(pk=pk).user)
-        # contrib = Contributor.objects.filter(user=self)
-        # print('author:', contrib)
-
         if view.action in "list":
             return self.is_contributor(view.kwargs["projects_pk"], request.user) or self.is_author(
                 view.kwargs["projects_pk"], request.user)
@@ -110,8 +85,8 @@ class IsIssueContributor(IsContributor, IsAuthor):
 
 class IsCommentAuthorOrContributor(IsAuthor, IsContributor):
 
-    def has_permission(self, request, view, obj):
-        if view.action == "create":
+    def has_permission(self, request, view):
+        if view.action == "list":
             return self.is_issue_contributor_or_author(request.user, view.kwargs["pk"])
         if view.action in ("destroy", "update"):
             # return self.is_author(view.kwargs["pk"], request.user)
