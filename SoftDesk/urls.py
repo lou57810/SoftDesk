@@ -20,7 +20,7 @@ from django.urls import path, include
 from api.views import ContributorsViewset, ProjectsViewset, IssuesViewset, CommentsViewset
 from django.urls import re_path
 
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView  # , TokenRefreshView
 # from authentication.views import MyObtainTokenPairView, RegisterView, LogoutPage
 from authentication.views import RegisterView, LogoutPage
 from rest_framework import routers
@@ -29,7 +29,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 
-"""
+
 schema_view = get_schema_view(
    openapi.Info(
       title="SoftDesk API",
@@ -42,7 +42,7 @@ schema_view = get_schema_view(
    public=True,
    permission_classes=[permissions.AllowAny],
 )
-"""
+
 """
 router = routers.SimpleRouter()
 router.register('projects/', ProjectsViewset, basename='projects')
@@ -55,7 +55,7 @@ project_router.register('issues/', IssuesViewset, basename='issues')
 issue_router = routers.NestedSimpleRouter(project_router, 'issues', lookup='issues')
 issue_router.register('comments', CommentsViewset, basename='comments')
 """
-router = routers.SimpleRouter()     #(trailing_slash=False)
+router = routers.SimpleRouter()   # (trailing_slash=False)
 router.register("projects", ProjectsViewset, basename="project")
 
 projects_router = routers.NestedSimpleRouter(router, "projects", lookup="projects")
@@ -84,8 +84,8 @@ urlpatterns = [
     path('signup/', RegisterView.as_view(), name='auth_register'),
     path('logout/', LogoutPage.as_view(), name='logout'),
 
-    # re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    # re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    # re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
 ]

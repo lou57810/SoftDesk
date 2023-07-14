@@ -1,10 +1,10 @@
-from rest_framework.serializers import ModelSerializer, StringRelatedField,\
-    SerializerMethodField, SlugRelatedField, HyperlinkedIdentityField
+from rest_framework.serializers import StringRelatedField,\
+    SerializerMethodField, SlugRelatedField  # HyperlinkedIdentityField, ModelSerializer,
 from rest_framework import serializers
 
 
 from .models import Contributor, Project, Issue, Comment
-from authentication.models import CustomUser
+# from authentication.models import CustomUser
 from django.contrib.auth import get_user_model
 
 
@@ -13,7 +13,7 @@ class ProjectsListSerializer(serializers.ModelSerializer):
     # contributors = StringRelatedField()  # display logged contributor = author
     # edit_url = HyperlinkedIdentityField(view_name="projects-detail")
     # author = SlugRelatedField(queryset=get_user_model().objects.all(),
-                              # slug_field="username")
+    # slug_field="username")
 
     class Meta:
         model = Project
@@ -44,7 +44,7 @@ class ProjectsDetailSerializer(serializers.ModelSerializer):
 
 class ContributorSerializer(serializers.ModelSerializer):
     user = SlugRelatedField(queryset=get_user_model().objects.all(),
-                                   slug_field="username")
+                            slug_field="username")
     project = StringRelatedField()
 
     class Meta:
@@ -57,7 +57,6 @@ class IssueSerializer(serializers.ModelSerializer):
     # author = SerializerMethodField()
     # author = StringRelatedField(read_only=True)
     author = StringRelatedField()
-
 
     comments = SerializerMethodField()
     assignee_user_id = SlugRelatedField(queryset=get_user_model().objects.all(),
@@ -83,15 +82,3 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ['pk', 'description', 'author', 'issue', 'created_time']
-
-
-
-
-
-
-
-
-
-
-
-

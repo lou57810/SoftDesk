@@ -1,9 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect   # render,
 from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView
+# from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import CustomUser
 # from .serializers import MyTokenObtainPairSerializer
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+# from rest_framework.viewsets import ReadOnlyModelViewSet
 from .serializers import RegisterSerializer
 from rest_framework import generics
 from django.views.generic import View
@@ -28,6 +28,3 @@ class LogoutPage(View):
     def get(self, request):
         logout(request)
         return redirect('/login')
-
-
-
