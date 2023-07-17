@@ -9,11 +9,7 @@ from django.contrib.auth import get_user_model
 
 
 class ProjectsListSerializer(serializers.ModelSerializer):
-    author = StringRelatedField()   # display logged author
-    # contributors = StringRelatedField()  # display logged contributor = author
-    # edit_url = HyperlinkedIdentityField(view_name="projects-detail")
-    # author = SlugRelatedField(queryset=get_user_model().objects.all(),
-    # slug_field="username")
+    author = StringRelatedField()
 
     class Meta:
         model = Project
@@ -54,8 +50,6 @@ class ContributorSerializer(serializers.ModelSerializer):
 
 class IssueSerializer(serializers.ModelSerializer):
     project = StringRelatedField()
-    # author = SerializerMethodField()
-    # author = StringRelatedField(read_only=True)
     author = StringRelatedField()
 
     comments = SerializerMethodField()
@@ -74,8 +68,7 @@ class IssueSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    # author = SerializerMethodField()
-    # author = SlugRelatedField(queryset=get_user_model().objects.all(), slug_field="username")
+
     author = StringRelatedField(read_only=True)
     issue = StringRelatedField(read_only=True)
 

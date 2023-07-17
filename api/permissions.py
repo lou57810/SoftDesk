@@ -1,10 +1,8 @@
-# from .models import Project
 from rest_framework import permissions
-# from rest_framework.permissions import BasePermission
+
 from django.core.exceptions import ObjectDoesNotExist
 from api import models
-# from api.models import Project, Contributor, Issue, Comment
-# from django.db.models import Q
+
 
 
 # To implement a custom permission, override BasePermission
@@ -51,17 +49,11 @@ class IsProjectContributor(IsContributor, IsAuthor):
 
     def has_permission(self, request, view):
 
-        # project = Project.objects.filter(id=view.kwargs['projects_pk'])
-        # projects = Project.objects.filter(author_id=request.user)
-
         if view.action in ("create", "destroy", "update"):
             return self.is_author(view.kwargs["projects_pk"], request.user)
 
         return self.is_contributor(view.kwargs["projects_pk"], request.user) or\
             self.is_author(view.kwargs["projects_pk"], request.user)
-
-        # if "pk" not in view.kwargs:  # view.kwargs dictionnaire vide.
-        #   return True
 
 
 class IsIssueContributor(IsContributor, IsAuthor):
@@ -70,7 +62,8 @@ class IsIssueContributor(IsContributor, IsAuthor):
         if view.action in ("destroy", "update"):
             return self.is_author(
                 view.kwargs["projects_pk"], request.user)
-        return self.is_contributor(view.kwargs["projects_pk"], request.user)
+        return self.is_contributor(view.kwargs["projects_pk"], request.user) or\
+            self.is_author(view.kwargs["projects_pk"], request.user)
 
 
 class IsAuthorComment(permissions.BasePermission):
@@ -86,9 +79,9 @@ class IsAuthorComment(permissions.BasePermission):
 class IsCommentAuthorOrContributor(IsContributor, IsAuthor, IsAuthorComment):
 
     def has_permission(self, request, view):
-        # print('request:', request.user)
+
         if view.action in ("update", "destroy"):
-            # print('test:')
             return self.is_author_comment(view.kwargs["pk"], request.user)
+
         return self.is_contributor(view.kwargs["projects_pk"], request.user)\
             or self.is_author(view.kwargs["projects_pk"], request.user)
