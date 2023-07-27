@@ -55,6 +55,10 @@ Disposer de python 3.x de préférence la version maj.
 
 * Login utilisateur (POST) `http://127.0.0.1:8000/login/`
 
+* Utilisateurs préenregistrés: username: user1 password: abcd1111 et ainsi
+
+* de suite user2 abcd2222 user3 abcd3333... jusqu'à 7.
+
 * Copier l'access Token et le recopier dans l'autorisation de la collection,
 
 * ce qui généralisera l'accès à tous les endpoints de la collection.
