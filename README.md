@@ -61,6 +61,8 @@ Disposer de python 3.x de préférence la version maj.
 
 * Voir la documentation jointe de postman pour les endpoints.
 
+* [Lien Doc](https://documenter.getpostman.com/view/22746423/2s946idsAF)
+
 
 
 
