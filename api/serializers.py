@@ -1,10 +1,9 @@
 from rest_framework.serializers import StringRelatedField,\
-    SerializerMethodField, SlugRelatedField  # HyperlinkedIdentityField, ModelSerializer,
+    SerializerMethodField, SlugRelatedField
 from rest_framework import serializers
 
 
 from .models import Contributor, Project, Issue, Comment
-# from authentication.models import CustomUser
 from django.contrib.auth import get_user_model
 
 
@@ -58,8 +57,8 @@ class IssueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['pk', 'title', 'desc', 'tag', 'priority', 'project', 'status',
-                  'author', 'assignee_user_id', 'created_time', 'comments']
+        fields = ['pk', 'title', 'desc', 'tag', 'priority', 'project',
+                  'status', 'author', 'assignee_user_id', 'created_time', 'comments']
 
     def get_comments(self, instance):
         queryset = instance.comments.all()
